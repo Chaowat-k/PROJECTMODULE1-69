@@ -1,6 +1,3 @@
-// ===== index.tsx =====
-// หน้าแรก (Home) - แนะนำแอปพลิเคชันและฟีเจอร์ต่าง ๆ
-
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 
 export default function Home() {

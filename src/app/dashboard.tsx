@@ -1,7 +1,3 @@
-// ===== dashboard.tsx =====
-// หน้า Dashboard - อ่านค่า Light Sensor แบบ Real-time
-// แสดงค่า Lux, สถานะ, ปุ่มบันทึก, และประวัติข้อมูล
-
 import { useState, useEffect } from "react";
 import { View, Text, StyleSheet, FlatList, Button, Alert, Platform } from "react-native";
 import { LightSensor } from "expo-sensors";
@@ -40,7 +36,6 @@ export default function Dashboard() {
     }
   };
 
-  // ===== useEffect - ทำงานเมื่อเปิดหน้า =====
   useEffect(() => {
     subscribe();
     fetchData();

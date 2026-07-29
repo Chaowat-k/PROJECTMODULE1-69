@@ -1,74 +1,46 @@
-// ===== monitoring.tsx =====
-// หน้า Monitoring - ตรวจสอบสถานะการเชื่อมต่อระบบ
-// แสดงสถานะของ Sensor, API และ Database
-
 import { useState, useEffect } from "react";
 import { View, Text, StyleSheet, Button, ScrollView, Platform } from "react-native";
 import { LightSensor } from "expo-sensors";
 import { getMonitoring } from "../services/api";
 
 export default function MonitoringDashboard() {
-  // ===== State สำหรับเก็บข้อมูลต่าง ๆ =====
-
-  // สถานะ Sensor (true = ทำงาน, false = ไม่ทำงาน)
-  const [sensorOnline, setSensorOnline] = useState(false);
-
-  // สถานะ API (true = เชื่อมต่อได้, false = เชื่อมต่อไม่ได้)
-  const [apiConnected, setApiConnected] = useState(false);
-
-  // สถานะ Database (true = เชื่อมต่อได้, false = เชื่อมต่อไม่ได้)
-  const [dbConnected, setDbConnected] = useState(false);
-
+  const [sensorOnline, setSensorOnline] = useState(false); // สถานะ Sensor (true = ทำงาน, false = ไม่ทำงาน)
+  const [apiConnected, setApiConnected] = useState(false); // สถานะ API (true = เชื่อมต่อได้, false = เชื่อมต่อไม่ได้)
+  const [dbConnected, setDbConnected] = useState(false); // สถานะ Database (true = เชื่อมต่อได้, false = เชื่อมต่อไม่ได้)
 
   // ===== ฟังก์ชันตรวจสอบ Sensor =====
   const checkSensor = () => {
-    // ตั้งค่าอัตราการอ่าน sensor (2 วินาที)
     LightSensor.setUpdateInterval(2000);
-
-    // เริ่มฟังค่า sensor
     const sub = LightSensor.addListener((data) => {
-      // ถ้าอ่านค่าได้ แสดงว่า sensor ทำงาน
       setSensorOnline(true);
     });
-
-    // คืนค่า subscription สำหรับยกเลิกทีหลัง
     return sub;
   };
 
   // ===== ฟังก์ชันดึงข้อมูลจาก API =====
   const fetchMonitoring = async () => {
     try {
-      // เรียก API ดึงข้อมูล monitoring
       const data = await getMonitoring();
-
-      // ถ้าเรียก API สำเร็จ
       setApiConnected(true);
-
-      // ถ้า API โหลดข้อมูลมาได้ แสดงว่า Database ก็เชื่อมต่อได้ปกติ
       if (data) {
         setDbConnected(true);
       } else {
         setDbConnected(false);
       }
     } catch (error) {
-      // ถ้าเรียก API ไม่ได้
       setApiConnected(false);
       setDbConnected(false);
     }
   };
 
-  // ===== useEffect - ทำงานเมื่อเปิดหน้า =====
   useEffect(() => {
-    // ดึงข้อมูลจาก API
     fetchMonitoring();
-
-    // ตรวจสอบ Sensor (ทำงานเฉพาะ Android)
+    
     let sub: any = null;
     if (Platform.OS === "android") {
       sub = checkSensor();
     }
-
-    // ยกเลิก sensor เมื่อออกจากหน้า
+    
     return () => {
       if (sub) {
         sub.remove();
