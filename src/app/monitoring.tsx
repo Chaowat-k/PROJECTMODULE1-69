@@ -109,7 +109,7 @@ export default function MonitoringDashboard() {
 
       {/* ===== ปุ่ม Refresh ===== */}
       <View style={styles.buttonContainer}>
-        <Button title="Refresh" onPress={fetchMonitoring} />
+        <Button title="🔄 Refresh" onPress={fetchMonitoring} color="#3498db" />
       </View>
 
       {/* ===== เว้นระยะด้านล่าง ===== */}
