@@ -38,7 +38,6 @@ export default function Dashboard() {
     setSubscription(null);
   };
 
-  // ===== เริ่มอ่านค่า Sensor เมื่อเปิดหน้า =====
   useEffect(() => {
     subscribe();
 
