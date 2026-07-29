@@ -9,10 +9,4 @@ export type LightHistory = {
   created_at: string;
 };
 
-// Type สำหรับข้อมูลสถิติ
-export type Statistics = {
-  total: number;
-  avg_lux: number;
-  max_lux: number;
-  min_lux: number;
-};
+

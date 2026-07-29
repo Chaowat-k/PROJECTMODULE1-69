@@ -3,7 +3,7 @@
 // ใช้ Axios ในการส่ง HTTP Request
 
 import axios from "axios";
-import { LightHistory, Statistics } from "../types/types";
+import { LightHistory } from "../types/types";
 
 const BASE_URL = "http://172.21.245.103/light_sensor/api";
 
@@ -30,10 +30,10 @@ export const deleteLight = async (id: number) => {
   const res = await axios.delete(`${BASE_URL}/deleteLight.php?id=${id}`);
   return res.data;
 };
-
-// ===== ฟังก์ชันดึงข้อมูลสถิติ =====
-// ดึงข้อมูลสรุป (จำนวน, ค่าเฉลี่ย, สูงสุด, ต่ำสุด)
-export const getStatistics = async (): Promise<Statistics> => {
-  const res = await axios.get(`${BASE_URL}/getStatistics.php`);
-  return res.data.data;
+// ===== ฟังก์ชันดึงข้อมูล Monitoring =====
+// ดึงสถานะระบบ, จำนวนวันนี้, ค่า Lux ล่าสุด, เวลาล่าสุด
+export const getMonitoring = async () => {
+  const res = await axios.get(`${BASE_URL}/getMonitoring.php`);
+  return res.data;
 };
+

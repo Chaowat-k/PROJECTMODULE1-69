@@ -41,23 +41,23 @@ export default function Layout() {
       />
 
       <Tabs.Screen
-        name="history"
+        name="evaluation"
         options={{
-          title: "History",
-          tabBarLabel: "History",
+          title: "Evaluate",
+          tabBarLabel: "Evaluate",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="time-outline" size={size} color={color} />
+            <Ionicons name="checkbox-outline" size={size} color={color} />
           ),
         }}
       />
 
       <Tabs.Screen
-        name="statistics"
+        name="monitoring"
         options={{
-          title: "Statistics",
-          tabBarLabel: "Statistics",
+          title: "Monitoring",
+          tabBarLabel: "Monitoring",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="bar-chart-outline" size={size} color={color} />
+            <Ionicons name="pulse-outline" size={size} color={color} />
           ),
         }}
       />
