@@ -33,7 +33,6 @@ export default function Statistics() {
     }
   };
 
-  // ===== ดึงข้อมูลเมื่อเปิดหน้า =====
   useEffect(() => {
     fetchStats();
   }, []);
