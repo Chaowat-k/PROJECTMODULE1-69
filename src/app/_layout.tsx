@@ -5,17 +5,37 @@ export default function Layout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: "#007AFF",
-        tabBarInactiveTintColor: "#999",
+        tabBarActiveTintColor: "#0D9488",
+        tabBarInactiveTintColor: "#9CA3AF",
         tabBarStyle: {
-          backgroundColor: "#fff",
-          height: 60,
-          paddingBottom: 8,
+          backgroundColor: "#FFFFFF",
+          height: 65,
+          paddingBottom: 10,
+          paddingTop: 6,
+          borderTopWidth: 1,
+          borderTopColor: "#E5E7EB",
+          elevation: 8,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.06,
+          shadowRadius: 6,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: "600",
         },
         headerStyle: {
-          backgroundColor: "#007AFF",
+          backgroundColor: "#FFFFFF",
+          elevation: 0,
+          shadowOpacity: 0,
+          borderBottomWidth: 1,
+          borderBottomColor: "#E5E7EB",
         },
-        headerTintColor: "#fff",
+        headerTintColor: "#1F2937",
+        headerTitleStyle: {
+          fontWeight: "bold",
+          fontSize: 18,
+        },
       }}
     >
       <Tabs.Screen
@@ -24,7 +44,7 @@ export default function Layout() {
           title: "Home",
           tabBarLabel: "Home",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" size={size} color={color} />
+            <Ionicons name="home" size={size} color={color} />
           ),
         }}
       />
@@ -35,7 +55,7 @@ export default function Layout() {
           title: "Dashboard",
           tabBarLabel: "Dashboard",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="sunny-outline" size={size} color={color} />
+            <Ionicons name="sunny" size={size} color={color} />
           ),
         }}
       />
@@ -46,7 +66,7 @@ export default function Layout() {
           title: "Evaluate",
           tabBarLabel: "Evaluate",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="checkbox-outline" size={size} color={color} />
+            <Ionicons name="clipboard" size={size} color={color} />
           ),
         }}
       />
@@ -55,9 +75,9 @@ export default function Layout() {
         name="monitoring"
         options={{
           title: "Monitoring",
-          tabBarLabel: "Monitoring",
+          tabBarLabel: "Monitor",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="pulse-outline" size={size} color={color} />
+            <Ionicons name="pulse" size={size} color={color} />
           ),
         }}
       />

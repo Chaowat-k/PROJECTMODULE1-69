@@ -1,23 +1,20 @@
 import { useState, useEffect } from "react";
-import { View, Text, StyleSheet, Button, ScrollView, Alert } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from "react-native";
+import { Picker } from "@react-native-picker/picker";
 import { getHistory } from "../services/api";
 import { LightHistory } from "../types/types";
 
 export default function ActivityEvaluation() {
-  const [historyList, setHistoryList] = useState<LightHistory[]>([]); // ข้อมูลประวัติทั้งหมด
-  const [selectedHistoryId, setSelectedHistoryId] = useState<number | null>(null); // ID ของประวัติที่เลือก
-  const [activity, setActivity] = useState("reading"); // กิจกรรมที่เลือก
-  
-  // State สำหรับเปิด/ปิด Dropdown จำลอง
-  const [showHistoryDropdown, setShowHistoryDropdown] = useState(false);
-  const [showActivityDropdown, setShowActivityDropdown] = useState(false);
+  const [historyList, setHistoryList] = useState<LightHistory[]>([]);
+  const [selectedHistoryId, setSelectedHistoryId] = useState<number | null>(null);
+  const [activity, setActivity] = useState("reading");
 
   // ===== ฟังก์ชันดึงข้อมูลจาก API =====
   const fetchData = async () => {
     try {
       const data = await getHistory();
       setHistoryList(data);
-      
+
       // ถ้ามีข้อมูล ให้เลือกข้อมูลแรกเป็นค่าเริ่มต้น
       if (data.length > 0 && selectedHistoryId === null) {
         setSelectedHistoryId(data[0].id);
@@ -34,54 +31,36 @@ export default function ActivityEvaluation() {
 
   // ===== ฟังก์ชันหาชื่อกิจกรรม =====
   const getActivityName = (act: string): string => {
-    if (act === "reading") {
-      return "📖 อ่านหนังสือ";
-    } else if (act === "computer") {
-      return "💻 ทำงานหน้าคอม";
-    } else if (act === "writing") {
-      return "✍ เขียนหนังสือ";
-    } else if (act === "phone") {
-      return "📱 เล่นโทรศัพท์";
-    } else {
-      return "😴 นอนพัก";
-    }
+    if (act === "reading") return "📖 อ่านหนังสือ";
+    if (act === "computer") return "💻 ทำงานหน้าคอม";
+    if (act === "writing") return "✍ เขียนหนังสือ";
+    if (act === "phone") return "📱 เล่นโทรศัพท์";
+    return "😴 นอนพัก";
   };
 
   // ===== ฟังก์ชันหาช่วง Lux ที่เหมาะสม =====
   const getSuitableRange = (act: string): { min: number; max: number } => {
-    if (act === "reading") {
-      return { min: 300, max: 500 };
-    } else if (act === "computer") {
-      return { min: 300, max: 500 };
-    } else if (act === "writing") {
-      return { min: 400, max: 600 };
-    } else if (act === "phone") {
-      return { min: 100, max: 300 };
-    } else {
-      return { min: 0, max: 50 }; // นอนพัก
-    }
+    if (act === "reading") return { min: 300, max: 500 };
+    if (act === "computer") return { min: 300, max: 500 };
+    if (act === "writing") return { min: 400, max: 600 };
+    if (act === "phone") return { min: 100, max: 300 };
+    return { min: 0, max: 50 }; // นอนพัก
   };
 
   // ===== ฟังก์ชันประเมินผล =====
-  const getEvaluation = (lux: number, act: string): string => {
+  const getEvaluation = (lux: number, act: string): { text: string; suitable: boolean } => {
     const range = getSuitableRange(act);
     if (lux >= range.min && lux <= range.max) {
-      return "✅ เหมาะสม";
-    } else {
-      return "❌ ไม่เหมาะสม";
+      return { text: "✅ เหมาะสม", suitable: true };
     }
+    return { text: "❌ ไม่เหมาะสม", suitable: false };
   };
 
   // ===== ฟังก์ชันคำนวณคะแนน =====
   const getQualityScore = (lux: number, act: string): number => {
     const range = getSuitableRange(act);
+    if (lux >= range.min && lux <= range.max) return 100;
 
-    // อยู่ในช่วงที่เหมาะสม
-    if (lux >= range.min && lux <= range.max) {
-      return 100;
-    }
-
-    // คำนวณระยะห่างจากช่วงที่เหมาะสม
     let distance = 0;
     if (lux < range.min) {
       distance = range.min - lux;
@@ -89,14 +68,9 @@ export default function ActivityEvaluation() {
       distance = lux - range.max;
     }
 
-    // ให้คะแนนตามระยะห่าง
-    if (distance <= 100) {
-      return 80; // ห่างเล็กน้อย
-    } else if (distance <= 300) {
-      return 60; // ห่างมาก
-    } else {
-      return 40; // ไม่เหมาะสม
-    }
+    if (distance <= 100) return 80;
+    if (distance <= 300) return 60;
+    return 40;
   };
 
   // ===== ฟังก์ชันแนะนำ =====
@@ -142,7 +116,6 @@ export default function ActivityEvaluation() {
   };
 
   // ===== คำนวณค่าต่าง ๆ =====
-  // หาข้อมูลประวัติที่กำลังเลือกอยู่
   const selectedHistory = historyList.find((h) => h.id === selectedHistoryId);
   const currentLux = selectedHistory ? selectedHistory.lux : 0;
 
@@ -152,119 +125,121 @@ export default function ActivityEvaluation() {
   const recommendation = getRecommendation(currentLux, activity);
   const tips = getTips(activity);
 
+  // ===== สีตามคะแนน =====
+  const getScoreColor = (s: number) => {
+    if (s >= 100) return "#10B981";
+    if (s >= 80) return "#0D9488";
+    if (s >= 60) return "#F59E0B";
+    return "#EF4444";
+  };
+
   return (
-    <ScrollView style={styles.container}>
-      {/* หัวข้อหลัก */}
-      <Text style={styles.title}>การประเมินกิจกรรม</Text>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      {/* Title */}
+      <Text style={styles.title}>🔬 การประเมินกิจกรรม</Text>
 
-      {/* เลือกข้อมูลประวัติ */}
-      <View style={styles.box}>
-        <Text style={styles.boxTitle}>เลือกข้อมูลที่บันทึกไว้</Text>
-        <Button 
-          title={selectedHistory ? `${selectedHistory.lux} Lux - ${formatDate(selectedHistory.created_at)} ⬇️` : "เลือกข้อมูล..."} 
-          onPress={() => setShowHistoryDropdown(!showHistoryDropdown)} 
-          color="#3498db"
-        />
-        
-        {/* แสดงรายการเมื่อกดปุ่ม (Dropdown จำลอง) */}
-        {showHistoryDropdown && (
-          <View style={styles.dropdownList}>
-            {historyList.length === 0 ? (
-              <Text style={styles.tipsText}>ไม่มีข้อมูล</Text>
-            ) : (
-              historyList.map((item) => (
-                <View key={item.id} style={styles.dropdownItem}>
-                  <Button 
-                    title={`${item.lux} Lux - ${formatDate(item.created_at)}`} 
-                    onPress={() => {
-                      setSelectedHistoryId(item.id);
-                      setShowHistoryDropdown(false);
-                    }} 
-                    color={selectedHistoryId === item.id ? "#2ecc71" : "#7f8c8d"}
-                  />
-                </View>
-              ))
-            )}
-          </View>
-        )}
+      {/* Picker: เลือกข้อมูลประวัติ */}
+      <View style={styles.card}>
+        <Text style={styles.cardLabel}>📂 เลือกข้อมูลที่บันทึกไว้</Text>
+        <View style={styles.pickerWrapper}>
+          {historyList.length === 0 ? (
+            <Text style={styles.emptyText}>ไม่มีข้อมูล</Text>
+          ) : (
+            <Picker
+              selectedValue={selectedHistoryId}
+              onValueChange={(value) => setSelectedHistoryId(value)}
+              style={styles.picker}
+              dropdownIconColor="#6B7280"
+            >
+              {historyList.map((item) => (
+                <Picker.Item
+                  key={item.id}
+                  label={`${item.lux} Lux - ${formatDate(item.created_at)}`}
+                  value={item.id}
+                  color="#374151"
+                />
+              ))}
+            </Picker>
+          )}
+        </View>
       </View>
 
-      {/* Current Lux */}
-      <View style={styles.box}>
-        <Text style={styles.boxTitle}>ค่าความสว่างที่ประเมิน</Text>
-        <Text style={styles.boxValue}>{currentLux} Lux</Text>
+      {/* Lux Display */}
+      <View style={styles.luxCard}>
+        <Text style={styles.luxLabel}>ค่าความสว่างที่ประเมิน</Text>
+        <View style={styles.luxRow}>
+          <Text style={styles.luxValue}>{currentLux}</Text>
+          <Text style={styles.luxUnit}>Lux</Text>
+        </View>
       </View>
 
-      {/* เลือกกิจกรรม */}
-      <View style={styles.box}>
-        <Text style={styles.boxTitle}>เลือกกิจกรรม</Text>
-        <Button 
-          title={`${getActivityName(activity)} ⬇️`} 
-          onPress={() => setShowActivityDropdown(!showActivityDropdown)} 
-          color="#9b59b6"
-        />
-
-        {/* แสดงรายการกิจกรรมเมื่อกดปุ่ม (Dropdown จำลอง) */}
-        {showActivityDropdown && (
-          <View style={styles.dropdownList}>
-            <View style={styles.dropdownItem}>
-              <Button title="📖 อ่านหนังสือ" onPress={() => { setActivity("reading"); setShowActivityDropdown(false); }} color={activity === "reading" ? "#2ecc71" : "#7f8c8d"} />
-            </View>
-            <View style={styles.dropdownItem}>
-              <Button title="💻 ทำงานหน้าคอม" onPress={() => { setActivity("computer"); setShowActivityDropdown(false); }} color={activity === "computer" ? "#2ecc71" : "#7f8c8d"} />
-            </View>
-            <View style={styles.dropdownItem}>
-              <Button title="✍ เขียนหนังสือ" onPress={() => { setActivity("writing"); setShowActivityDropdown(false); }} color={activity === "writing" ? "#2ecc71" : "#7f8c8d"} />
-            </View>
-            <View style={styles.dropdownItem}>
-              <Button title="📱 เล่นโทรศัพท์" onPress={() => { setActivity("phone"); setShowActivityDropdown(false); }} color={activity === "phone" ? "#2ecc71" : "#7f8c8d"} />
-            </View>
-            <View style={styles.dropdownItem}>
-              <Button title="😴 นอนพัก" onPress={() => { setActivity("sleep"); setShowActivityDropdown(false); }} color={activity === "sleep" ? "#2ecc71" : "#7f8c8d"} />
-            </View>
-          </View>
-        )}
+      {/* Picker: เลือกกิจกรรม */}
+      <View style={styles.card}>
+        <Text style={styles.cardLabel}>🎯 เลือกกิจกรรม</Text>
+        <View style={styles.pickerWrapper}>
+          <Picker
+            selectedValue={activity}
+            onValueChange={(value) => setActivity(value)}
+            style={styles.picker}
+            dropdownIconColor="#6B7280"
+          >
+            <Picker.Item label="📖 อ่านหนังสือ" value="reading" color="#374151" />
+            <Picker.Item label="💻 ทำงานหน้าคอม" value="computer" color="#374151" />
+            <Picker.Item label="✍ เขียนหนังสือ" value="writing" color="#374151" />
+            <Picker.Item label="📱 เล่นโทรศัพท์" value="phone" color="#374151" />
+            <Picker.Item label="😴 นอนพัก" value="sleep" color="#374151" />
+          </Picker>
+        </View>
       </View>
 
-      {/* Selected Activity */}
-      <View style={styles.box}>
-        <Text style={styles.boxTitle}>กิจกรรมที่เลือก</Text>
-        <Text style={styles.boxValue}>{getActivityName(activity)}</Text>
-        <Text style={styles.rangeText}>
-          ช่วงที่เหมาะสม: {range.min}-{range.max} Lux
-        </Text>
+      {/* Activity + Range */}
+      <View style={styles.card}>
+        <Text style={styles.cardLabel}>กิจกรรมที่เลือก</Text>
+        <Text style={styles.cardValue}>{getActivityName(activity)}</Text>
+        <View style={styles.rangeBadge}>
+          <Text style={styles.rangeText}>
+            ช่วงที่เหมาะสม: {range.min}–{range.max} Lux
+          </Text>
+        </View>
       </View>
 
       {/* Evaluation Result */}
-      <View style={styles.box}>
-        <Text style={styles.boxTitle}>ผลการประเมิน</Text>
-        <Text style={styles.boxValue}>{evaluation}</Text>
+      <View style={[styles.resultCard, { borderColor: evaluation.suitable ? "#10B981" : "#EF4444" }]}>
+        <Text style={styles.cardLabel}>ผลการประเมิน</Text>
+        <Text style={[styles.resultText, { color: evaluation.suitable ? "#10B981" : "#EF4444" }]}>
+          {evaluation.text}
+        </Text>
       </View>
 
       {/* Quality Score */}
-      <View style={styles.box}>
-        <Text style={styles.boxTitle}>คะแนนคุณภาพแสง</Text>
-        <Text style={styles.boxValue}>{score} /100</Text>
+      <View style={styles.scoreCard}>
+        <Text style={styles.cardLabel}>คะแนนคุณภาพแสง</Text>
+        <View style={styles.scoreRow}>
+          <Text style={[styles.scoreValue, { color: getScoreColor(score) }]}>{score}</Text>
+          <Text style={styles.scoreMax}>/100</Text>
+        </View>
+        {/* Progress bar */}
+        <View style={styles.progressBar}>
+          <View style={[styles.progressFill, { width: `${score}%`, backgroundColor: getScoreColor(score) }]} />
+        </View>
       </View>
 
       {/* Recommendation */}
-      <View style={styles.box}>
-        <Text style={styles.boxTitle}>คำแนะนำ</Text>
-        <Text style={styles.boxValue}>{recommendation}</Text>
+      <View style={styles.card}>
+        <Text style={styles.cardLabel}>💡 คำแนะนำ</Text>
+        <Text style={styles.recommendText}>{recommendation}</Text>
       </View>
 
       {/* Tips */}
-      <View style={styles.box}>
-        <Text style={styles.boxTitle}>เคล็ดลับ</Text>
+      <View style={styles.tipsCard}>
+        <Text style={styles.cardLabel}>📝 เคล็ดลับ</Text>
         <Text style={styles.tipsText}>{tips}</Text>
       </View>
 
-
-
-      {/* ปุ่ม Refresh */}
-      <View style={styles.buttonContainer}>
-        <Button title="🔄 Refresh" onPress={fetchData} color="#3498db" />
-      </View>
+      {/* Refresh */}
+      <TouchableOpacity style={styles.refreshBtn} onPress={fetchData} activeOpacity={0.7}>
+        <Text style={styles.refreshBtnText}>🔄 รีเฟรช</Text>
+      </TouchableOpacity>
 
       <View style={{ height: 30 }} />
     </ScrollView>
@@ -274,52 +249,210 @@ export default function ActivityEvaluation() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: "#fff",
+    backgroundColor: "#F5F7FA",
+  },
+  content: {
+    padding: 20,
   },
   title: {
     fontSize: 22,
     fontWeight: "bold",
     textAlign: "center",
-    marginBottom: 16,
-    color: "#000",
+    marginBottom: 20,
+    color: "#1F2937",
   },
-  box: {
-    padding: 15,
-    marginBottom: 12,
+
+  // Card base
+  card: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 14,
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: "#E5E7EB",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
   },
-  boxTitle: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 5,
+  cardLabel: {
+    fontSize: 13,
+    color: "#6B7280",
+    marginBottom: 8,
+    fontWeight: "500",
   },
-  boxValue: {
+  cardValue: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#000",
+    color: "#1F2937",
+  },
+
+  // Picker
+  pickerWrapper: {
+    backgroundColor: "#F9FAFB",
+    borderRadius: 12,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  picker: {
+    width: "100%",
+    color: "#374151",
+  },
+  emptyText: {
+    fontSize: 14,
+    color: "#9CA3AF",
+    padding: 16,
+    textAlign: "center",
+  },
+
+  // Lux display
+  luxCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 24,
+    marginBottom: 14,
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#0D9488",
+    elevation: 2,
+    shadowColor: "#0D9488",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  luxLabel: {
+    fontSize: 13,
+    color: "#6B7280",
+    marginBottom: 6,
+  },
+  luxRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+  },
+  luxValue: {
+    fontSize: 42,
+    fontWeight: "bold",
+    color: "#0D9488",
+  },
+  luxUnit: {
+    fontSize: 18,
+    color: "#9CA3AF",
+    marginBottom: 6,
+    marginLeft: 6,
+    fontWeight: "600",
+  },
+
+  // Range badge
+  rangeBadge: {
+    backgroundColor: "#F0FDFA",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginTop: 10,
+    alignSelf: "flex-start",
+    borderWidth: 1,
+    borderColor: "#99F6E4",
   },
   rangeText: {
     fontSize: 13,
-    color: "#666",
-    marginTop: 4,
+    color: "#0D9488",
+    fontWeight: "500",
   },
-  dropdownList: {
-    marginTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: "#ccc",
-    paddingTop: 10,
+
+  // Result
+  resultCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 14,
+    borderWidth: 2,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
   },
-  dropdownItem: {
-    marginBottom: 6,
+  resultText: {
+    fontSize: 22,
+    fontWeight: "bold",
+  },
+
+  // Score
+  scoreCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+  },
+  scoreRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    marginBottom: 12,
+  },
+  scoreValue: {
+    fontSize: 40,
+    fontWeight: "bold",
+  },
+  scoreMax: {
+    fontSize: 18,
+    color: "#9CA3AF",
+    marginBottom: 4,
+    marginLeft: 4,
+  },
+  progressBar: {
+    height: 8,
+    backgroundColor: "#E5E7EB",
+    borderRadius: 4,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    borderRadius: 4,
+  },
+
+  // Recommendation
+  recommendText: {
+    fontSize: 16,
+    color: "#374151",
+    lineHeight: 24,
+  },
+
+  // Tips
+  tipsCard: {
+    backgroundColor: "#F0FDFA",
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: "#99F6E4",
   },
   tipsText: {
-    fontSize: 16,
-    color: "#000",
+    fontSize: 15,
+    color: "#374151",
     lineHeight: 26,
   },
-  buttonContainer: {
-    marginTop: 10,
+
+  // Refresh
+  refreshBtn: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#0D9488",
+  },
+  refreshBtnText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#0D9488",
   },
 });

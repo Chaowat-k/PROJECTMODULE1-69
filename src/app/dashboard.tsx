@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
-import { View, Text, StyleSheet, FlatList, Button, Alert, Platform } from "react-native";
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, Platform } from "react-native";
 import { LightSensor } from "expo-sensors";
 import { addLight, getHistory, deleteLight } from "../services/api";
 import { getStatus } from "../utils/helpers";
 import { LightHistory } from "../types/types";
 
 export default function Dashboard() {
-  const [lux, setLux] = useState(0); // ค่า Lux จาก sensor
-  const [subscription, setSubscription] = useState<any>(null); // subscription ของ sensor
-  const [saving, setSaving] = useState(false); // สถานะกำลังบันทึก
-  const [list, setList] = useState<LightHistory[]>([]); // รายการประวัติ
+  const [lux, setLux] = useState(0);
+  const [subscription, setSubscription] = useState<any>(null);
+  const [saving, setSaving] = useState(false);
+  const [list, setList] = useState<LightHistory[]>([]);
 
   // ===== ฟังก์ชันเริ่มอ่านค่า Sensor =====
   const subscribe = () => {
@@ -51,7 +51,7 @@ export default function Dashboard() {
 
       if (result.success) {
         Alert.alert("สำเร็จ", "บันทึกข้อมูลสำเร็จ");
-        fetchData(); // โหลดประวัติใหม่
+        fetchData();
       } else {
         Alert.alert("ผิดพลาด", result.message);
       }
@@ -73,7 +73,7 @@ export default function Dashboard() {
           try {
             const result = await deleteLight(id);
             if (result.success) {
-              fetchData(); // โหลดประวัติใหม่
+              fetchData();
             } else {
               Alert.alert("ผิดพลาด", result.message);
             }
@@ -88,86 +88,92 @@ export default function Dashboard() {
   // ===== กำหนดสถานะปัจจุบัน =====
   const currentStatus = getStatus(lux);
 
+  // ===== สีของสถานะ =====
+  const getStatusColor = (status: string) => {
+    if (status === "มืด") return "#EF4444";
+    if (status === "สลัว") return "#F59E0B";
+    if (status === "สว่างปกติ") return "#10B981";
+    return "#3B82F6";
+  };
+
   // ===== แสดงข้อมูลแต่ละรายการในประวัติ =====
   const renderItem = ({ item }: { item: LightHistory }) => (
     <View style={styles.historyItem}>
       <View style={styles.historyRow}>
-        {/* ข้อมูลฝั่งซ้าย */}
         <View style={styles.historyInfo}>
-          <Text style={styles.historyLux}>{item.lux} Lux</Text>
-          <Text style={styles.historyStatus}>{item.status}</Text>
+          <View style={styles.historyLuxRow}>
+            <Text style={styles.historyLux}>{item.lux}</Text>
+            <Text style={styles.historyLuxUnit}> Lux</Text>
+          </View>
+          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + "15", borderColor: getStatusColor(item.status) }]}>
+            <Text style={[styles.statusBadgeText, { color: getStatusColor(item.status) }]}>{item.status}</Text>
+          </View>
           <Text style={styles.historyTime}>{item.created_at}</Text>
         </View>
 
-        {/* ปุ่มลบฝั่งขวา */}
-        <View style={styles.historyAction}>
-          <Button title="ลบ" color="#e74c3c" onPress={() => handleDelete(item.id)} />
-        </View>
+        <TouchableOpacity style={styles.deleteButton} onPress={() => handleDelete(item.id)}>
+          <Text style={styles.deleteButtonText}>🗑️</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
 
-  // ===== ส่วนหัวของหน้า (Sensor + ปุ่มบันทึก + หัวข้อประวัติ) =====
+  // ===== ส่วนหัวของหน้า =====
   const renderHeader = () => (
     <View>
-      {/* ===== ส่วน Sensor ===== */}
-      <View style={styles.sensorSection}>
-        {/* หัวข้อ */}
-        <Text style={styles.title}>Light Sensor</Text>
-
-        {/* ค่า Lux */}
-        <View style={styles.luxCard}>
-          <Text style={styles.luxLabel}>ค่าแสงปัจจุบัน</Text>
+      {/* Sensor Card */}
+      <View style={styles.sensorCard}>
+        <Text style={styles.sensorLabel}>ค่าแสงปัจจุบัน</Text>
+        <View style={styles.luxDisplay}>
           <Text style={styles.luxValue}>
-            {Platform.OS === "android" ? lux.toFixed(2) : "ใช้ได้เฉพาะ Android"}
+            {Platform.OS === "android" ? lux.toFixed(1) : "—"}
           </Text>
           <Text style={styles.luxUnit}>Lux</Text>
         </View>
 
-        {/* สถานะ */}
-        <View style={styles.statusCard}>
-          <Text style={styles.statusLabel}>สถานะ</Text>
-          <Text style={styles.statusValue}>
-            {Platform.OS === "android" ? currentStatus : "-"}
+        {/* Status Badge */}
+        <View style={[styles.currentStatusBadge, { backgroundColor: getStatusColor(currentStatus) + "15" }]}>
+          <View style={[styles.statusDot, { backgroundColor: getStatusColor(currentStatus) }]} />
+          <Text style={[styles.currentStatusText, { color: getStatusColor(currentStatus) }]}>
+            {Platform.OS === "android" ? currentStatus : "ใช้ได้เฉพาะ Android"}
           </Text>
         </View>
+      </View>
 
-        {/* ปุ่มบันทึก */}
-        <View style={styles.saveButton}>
-          <Button
-            title={saving ? "กำลังบันทึก..." : "💾 บันทึกข้อมูล"}
-            onPress={handleSave}
-            disabled={saving}
-            color="#2ecc71"
-          />
+      {/* Save Button */}
+      <TouchableOpacity
+        style={[styles.saveBtn, saving && styles.saveBtnDisabled]}
+        onPress={handleSave}
+        disabled={saving}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.saveBtnText}>
+          {saving ? "⏳ กำลังบันทึก..." : "💾 บันทึกข้อมูล"}
+        </Text>
+      </TouchableOpacity>
+
+      {/* History Header */}
+      <View style={styles.historyHeader}>
+        <Text style={styles.historyTitle}>📋 ประวัติข้อมูล</Text>
+        <View style={styles.countBadge}>
+          <Text style={styles.countBadgeText}>{list.length}</Text>
         </View>
       </View>
 
-      {/* ===== เส้นแบ่ง ===== */}
-      <View style={styles.divider} />
+      {/* Refresh */}
+      <TouchableOpacity style={styles.refreshBtn} onPress={fetchData} activeOpacity={0.7}>
+        <Text style={styles.refreshBtnText}>🔄 รีเฟรช</Text>
+      </TouchableOpacity>
 
-      {/* ===== ส่วนหัวข้อประวัติ ===== */}
-      <View style={styles.historyHeader}>
-        <Text style={styles.historyTitle}>ประวัติข้อมูล</Text>
-        <Text style={styles.historyCount}>ทั้งหมด {list.length} รายการ</Text>
-      </View>
-
-
-      {/* แสดงเมื่อไม่มีข้อมูล */}
-      {list.length === 0 ? (
-        <Text style={styles.statusText}>ไม่มีข้อมูล</Text>
-      ) : null}
+      {list.length === 0 && (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyIcon}>📭</Text>
+          <Text style={styles.emptyText}>ยังไม่มีข้อมูล</Text>
+        </View>
+      )}
     </View>
   );
 
-  // ===== ส่วนท้าย (ปุ่ม Refresh) =====
-  const renderFooter = () => (
-    <View style={styles.refreshButton}>
-      <Button title="🔄 Refresh" onPress={fetchData} color="#3498db" />
-    </View>
-  );
-
-  // ===== แสดงหน้าจอ =====
   return (
     <FlatList
       style={styles.container}
@@ -175,7 +181,6 @@ export default function Dashboard() {
       keyExtractor={(item) => item.id.toString()}
       renderItem={renderItem}
       ListHeaderComponent={renderHeader}
-      ListFooterComponent={renderFooter}
       contentContainerStyle={styles.listContent}
     />
   );
@@ -184,101 +189,162 @@ export default function Dashboard() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#F5F7FA",
   },
   listContent: {
-    padding: 16,
+    padding: 20,
     paddingBottom: 30,
   },
-  sensorSection: {
-    marginBottom: 10,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 16,
-    color: "#000",
-  },
-  luxCard: {
-    padding: 20,
-    marginBottom: 12,
+
+  // Sensor Card
+  sensorCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 28,
     alignItems: "center",
+    marginBottom: 16,
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: "#E5E7EB",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
   },
-  luxLabel: {
+  sensorLabel: {
     fontSize: 14,
-    color: "#666",
-    marginBottom: 4,
+    color: "#6B7280",
+    marginBottom: 8,
+    fontWeight: "500",
+  },
+  luxDisplay: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    marginBottom: 16,
   },
   luxValue: {
-    fontSize: 36,
+    fontSize: 52,
     fontWeight: "bold",
-    color: "#000",
+    color: "#1F2937",
   },
   luxUnit: {
-    fontSize: 14,
-    color: "#666",
-    marginTop: 2,
+    fontSize: 20,
+    color: "#9CA3AF",
+    marginBottom: 8,
+    marginLeft: 6,
+    fontWeight: "600",
   },
-  statusCard: {
-    padding: 16,
-    marginBottom: 12,
+
+  // Status
+  currentStatusBadge: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#ccc",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
   },
-  statusLabel: {
-    fontSize: 16,
-    color: "#666",
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 8,
   },
-  statusValue: {
-    fontSize: 18,
+  currentStatusText: {
+    fontSize: 15,
+    fontWeight: "600",
+  },
+
+  // Save Button
+  saveBtn: {
+    backgroundColor: "#0D9488",
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: "center",
+    marginBottom: 24,
+    elevation: 2,
+    shadowColor: "#0D9488",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  saveBtnDisabled: {
+    backgroundColor: "#D1D5DB",
+  },
+  saveBtnText: {
+    fontSize: 17,
     fontWeight: "bold",
-    color: "#000",
+    color: "#FFFFFF",
   },
-  saveButton: {
-    marginTop: 8,
-    marginBottom: 4,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#ccc",
-    marginVertical: 20,
-  },
+
+  // History Header
   historyHeader: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 12,
   },
   historyTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#000",
+    color: "#374151",
+    flex: 1,
   },
-  historyCount: {
+  countBadge: {
+    backgroundColor: "#0D9488",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    minWidth: 32,
+    alignItems: "center",
+  },
+  countBadgeText: {
+    fontSize: 13,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+  },
+
+  // Refresh
+  refreshBtn: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: "center",
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: "#0D9488",
+  },
+  refreshBtnText: {
     fontSize: 14,
-    color: "#666",
+    fontWeight: "600",
+    color: "#0D9488",
   },
-  refreshButton: {
+
+  // Empty
+  emptyState: {
+    alignItems: "center",
+    paddingVertical: 40,
+  },
+  emptyIcon: {
+    fontSize: 40,
     marginBottom: 12,
   },
-  statusText: {
-    textAlign: "center",
+  emptyText: {
     fontSize: 16,
-    color: "#666",
-    marginTop: 20,
-    marginBottom: 10,
+    color: "#9CA3AF",
   },
+
+  // History Item
   historyItem: {
-    padding: 14,
-    marginBottom: 8,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 10,
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: "#E5E7EB",
+    elevation: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
   },
   historyRow: {
     flexDirection: "row",
@@ -288,22 +354,51 @@ const styles = StyleSheet.create({
   historyInfo: {
     flex: 1,
   },
-  historyLux: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#000",
-    marginBottom: 2,
+  historyLuxRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    marginBottom: 6,
   },
-  historyStatus: {
+  historyLux: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#1F2937",
+  },
+  historyLuxUnit: {
     fontSize: 14,
-    color: "#666",
-    marginBottom: 2,
+    color: "#9CA3AF",
+    fontWeight: "500",
+  },
+  statusBadge: {
+    alignSelf: "flex-start",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    marginBottom: 6,
+    borderWidth: 1,
+  },
+  statusBadgeText: {
+    fontSize: 12,
+    fontWeight: "600",
   },
   historyTime: {
     fontSize: 12,
-    color: "#999",
+    color: "#9CA3AF",
   },
-  historyAction: {
-    marginLeft: 10,
+
+  // Delete Button
+  deleteButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: "#FEF2F2",
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 12,
+    borderWidth: 1,
+    borderColor: "#FECACA",
+  },
+  deleteButtonText: {
+    fontSize: 18,
   },
 });
