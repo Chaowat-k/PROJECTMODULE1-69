@@ -3,11 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform } from "
 import { LightSensor } from "expo-sensors";
 import { getMonitoring } from "../services/api";
 
-export default function MonitoringDashboard() {
-  const [sensorOnline, setSensorOnline] = useState(false);
-  const [apiConnected, setApiConnected] = useState(false);
-  const [dbConnected, setDbConnected] = useState(false);
-  const [loading, setLoading] = useState(true);
+
 
   // ===== ฟังก์ชันตรวจสอบ Sensor =====
   const checkSensor = () => {
