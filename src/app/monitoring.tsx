@@ -7,7 +7,7 @@ export default function MonitoringDashboard() {
   const [sensorOnline, setSensorOnline] = useState(false);
   const [apiConnected, setApiConnected] = useState(false);
   const [dbConnected, setDbConnected] = useState(false);
-  const [loading, setLoading] = useState(true);
+
 
   // ===== ฟังก์ชันตรวจสอบ Sensor =====
   const checkSensor = () => {
@@ -20,7 +20,7 @@ export default function MonitoringDashboard() {
 
   // ===== ฟังก์ชันดึงข้อมูลจาก API =====
   const fetchMonitoring = async () => {
-    setLoading(true);
+
     try {
       const data = await getMonitoring();
       setApiConnected(true);
@@ -32,8 +32,6 @@ export default function MonitoringDashboard() {
     } catch (error) {
       setApiConnected(false);
       setDbConnected(false);
-    } finally {
-      setLoading(false);
     }
   };
 
