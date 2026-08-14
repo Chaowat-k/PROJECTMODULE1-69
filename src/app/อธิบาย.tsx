@@ -397,6 +397,7 @@ export default function ActivityEvaluation() {
   );
 }
 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
