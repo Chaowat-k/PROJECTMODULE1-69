@@ -56,7 +56,7 @@ export default function ActivityEvaluation() {
   };
 
   // ===== ฟังก์ชันคำนวณคะแนน =====
-  const getQualityScore = (lux: number, act: string): number => { //: number ชนิดของผลลัพธ์ที่จะส่งกลับออกไป" (Return Type) 
+  const getQualityScore = (lux: number, act: string): number => { 
     const range = getSuitableRange(act);
     if (lux >= range.min && lux <= range.max) return 100;
 
