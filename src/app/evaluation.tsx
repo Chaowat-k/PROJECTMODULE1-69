@@ -24,7 +24,6 @@ export default function ActivityEvaluation() {
     }
   };
 
-  // ===== useEffect - ดึงข้อมูลเมื่อเปิดหน้า =====
   useEffect(() => {
     fetchData();
   }, []);

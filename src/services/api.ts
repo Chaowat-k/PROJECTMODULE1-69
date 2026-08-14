@@ -5,7 +5,7 @@
 import axios from "axios";
 import { LightHistory } from "../types/types";
 
-const BASE_URL = "http://172.21.237.179/light_sensor/api";
+const BASE_URL = "http://172.21.237.161/light_sensor/api";
 
 // ===== ฟังก์ชันเพิ่มข้อมูล =====
 // ส่งค่า lux และ status ไปบันทึกในฐานข้อมูล
