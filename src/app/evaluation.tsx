@@ -101,19 +101,6 @@ export default function ActivityEvaluation() {
     }
   };
 
-  // ===== ฟังก์ชันจัดรูปแบบวันที่ =====
-  const formatDate = (dateStr: string): string => {
-    if (!dateStr) return "-";
-    const d = new Date(dateStr);
-    const day = String(d.getDate()).padStart(2, "0");
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const year = d.getFullYear();
-    const hours = String(d.getHours()).padStart(2, "0");
-    const minutes = String(d.getMinutes()).padStart(2, "0");
-    const seconds = String(d.getSeconds()).padStart(2, "0");
-    return `${day}/${month}/${year}  ${hours}:${minutes}:${seconds}`;
-  };
-
   // ===== คำนวณค่าต่าง ๆ =====
   const selectedHistory = historyList.find((h) => h.id === selectedHistoryId);
   const currentLux = selectedHistory ? selectedHistory.lux : 0;
@@ -153,7 +140,7 @@ export default function ActivityEvaluation() {
               {historyList.map((item) => (
                 <Picker.Item
                   key={item.id}
-                  label={`${item.lux} Lux - ${formatDate(item.created_at)}`}
+                  label={`${item.lux} Lux - ${item.created_at}`}
                   value={item.id}
                   color="#374151"
                 />
